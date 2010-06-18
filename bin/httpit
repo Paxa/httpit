@@ -1,0 +1,88 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'sinatra'
+require 'haml'
+
+ROOT = Dir.pwd
+
+set :views, ROOT
+set :public,   ROOT
+
+# only one parametr - port number
+if ARGV.size > 0
+  set :port, ARGV.first.to_i
+end
+
+
+# build array of contents and theris type for specified folder
+def get_content folder = nil
+  # building absolute path
+  abs_path = folder ? (File.join ROOT, folder) : ROOT
+  
+  # build array if pairs: [filename, :type]
+  Dir.entries(abs_path).map do |obj|
+    [obj, 
+      if File.file? File.join(abs_path, obj)
+        :file
+      elsif File.directory? File.join(abs_path, obj)
+        :dir
+      elsif File.symlink? File.join(abs_path, obj)
+        :link
+      end
+    ]
+  end
+end
+
+# shows index.html or folder contents if index.html does not exists
+get '/' do 
+  if File.file? './index.html'
+    File.open('./index.html') {|f| f.read }
+  else
+    @folder = ''
+    @files = get_content.select {|f| f[0] != '.' && f[0] != '..' }
+    haml :listing
+  end
+end
+
+# shows folder contents
+get %r{.+} do
+  return nil if request.env['PATH_INFO'] == '/favicon.ico'
+  @folder = request.env['PATH_INFO']
+  @files = get_content(@folder)
+  haml :listing
+end
+
+__END__
+
+@@ listing
+<style type="text/css">
+:sass
+  #wrap
+    :width 800px
+    :margin 50 auto
+
+  span
+    :color #777
+      
+  ul, li
+    :list-style-type none
+</style>
+#wrap
+  %h1
+    %span Folder: 
+    = @folder == '' ? '/' : @folder
+    - if @folder != ''
+      %a{:href => "#{@folder}/.."} &larr;
+
+  %ul
+    - for file in @files
+      %li
+        - if file[1] == :file
+          %span= "&ndash;"
+        - elsif file[1] == :dir
+          %span= "+"
+        - elsif file[1] == :link
+          %span= "&rarr;"
+          
+        %a{:href => "#{@folder}/#{file[0]}"}= file[0]
