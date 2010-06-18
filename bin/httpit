@@ -8,6 +8,7 @@ ROOT = Dir.pwd
 
 set :views, ROOT
 set :public,   ROOT
+set :app_file, $0
 
 # only one parametr - port number
 if ARGV.size > 0

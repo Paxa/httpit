@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name              = "httpit"
-  s.version           = "0.1"
+  s.version           = "0.1.2"
   s.summary           = "Web server for static files"
   s.description       = "Just go to folder and run `httpit`"
   s.author            = "Pavel Evstigneev"
