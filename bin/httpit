@@ -3,12 +3,15 @@
 require 'rubygems'
 require 'sinatra'
 require 'haml'
+require 'redcloth'
 
 ROOT = Dir.pwd
 
 set :views, ROOT
 set :public,   ROOT
 set :app_file, $0
+
+set :static, false
 
 # only one parametr - port number
 if ARGV.size > 0
@@ -19,7 +22,7 @@ end
 # build array of contents and theris type for specified folder
 def get_content folder = nil
   # building absolute path
-  abs_path = folder ? (File.join ROOT, folder) : ROOT
+  abs_path = folder ? File.join(ROOT, folder) : ROOT
   
   # build array if pairs: [filename, :type]
   Dir.entries(abs_path).map do |obj|
@@ -37,8 +40,10 @@ end
 
 # shows index.html or folder contents if index.html does not exists
 get '/' do 
-  if File.file? './index.html'
+  if File.file?('./index.html')
     File.open('./index.html') {|f| f.read }
+  elsif File.file?('./index.haml')
+    haml :index
   else
     @folder = ''
     @files = get_content.select {|f| f[0] != '.' && f[0] != '..' }
@@ -46,12 +51,50 @@ get '/' do
   end
 end
 
+get '/__img_preview' do
+  params[:file] = params[:file].gsub ' ', '\ '
+  tmppath = "/tmp/httpit_preview_#{Time.now.to_i}.jpeg"
+  `convert #{File.join ROOT, params[:file]} -resize 1024 -quality 100% #{tmppath}`
+  content_type "image/jpeg"
+  content = File.open(tmppath, 'rb') { |f| f.read }
+  File.delete(tmppath)
+  content
+end
+
 # shows folder contents
 get %r{.+} do
-  return nil if request.env['PATH_INFO'] == '/favicon.ico'
-  @folder = request.env['PATH_INFO']
-  @files = get_content(@folder)
-  haml :listing
+  return nil if request.path == '/favicon.ico'
+  @path = request.path
+  
+  abs_path = File.join(ROOT, @path)
+  
+  if @path =~ /.+\.sass\.css/
+    content_type :css
+    sass @path.chomp('.sass.css').to_sym
+    
+  elsif !File.file?(abs_path) && !File.directory?(abs_path)
+    halt 404
+
+  elsif @path =~ /.+\.md/
+    content_type :html
+    content = File.open(abs_path) {|f| f.read }
+    return RedCloth.new(content).to_html
+    
+  elsif @path =~ /.+\.haml/
+    haml @path.chomp('.haml').to_sym
+      
+  elsif File.file?(abs_path)
+    send_file(abs_path)
+    
+  else
+    @files = get_content(@path)
+    haml :listing
+  end
+end
+
+error 404 do
+  @path = request.path
+  haml :not_found
 end
 
 __END__
@@ -68,13 +111,17 @@ __END__
       
   ul, li
     :list-style-type none
+    
+  .preview_link
+    :color #55a075
+    :margin-left 20px
 </style>
 #wrap
   %h1
     %span Folder: 
-    = @folder == '' ? '/' : @folder
-    - if @folder != ''
-      %a{:href => "#{@folder}/.."} &larr;
+    = @path == '' ? '/' : @path
+    - if @path != ''
+      %a{:href => "#{@path}/.."} &larr;
 
   %ul
     - for file in @files
@@ -86,4 +133,19 @@ __END__
         - elsif file[1] == :link
           %span= "&rarr;"
           
-        %a{:href => "#{@folder}/#{file[0]}"}= file[0]
+        %a{:href => "#{@path}/#{file[0]}"}= file[0]
+        
+        - if %w{.jpg .jpeg .png .gif}.include?(File.extname(file[0]).downcase)
+          %a{:href => "/__img_preview?file=#{@path}/#{file[0]}", :class => "preview_link"} #1024
+
+@@ not_found
+<style type="text/css">
+:sass
+  #wrap
+    :width 800px
+    :margin 50 auto
+</style>
+#wrap
+  %h1 File not found
+  
+  %h3= "You requested <i>#{@path}</i>"

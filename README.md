@@ -9,3 +9,11 @@ Build on sinatra, useful for developing JS applications and doing "psd => xhtml"
     $ httpit
     # or you can set port
     $ httpit <port number>
+
+## Features
+
+* Haml support
+* Sass support
+* MarkDown support
+
+See example

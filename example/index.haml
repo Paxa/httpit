@@ -1,0 +1,29 @@
+!!! 5
+%html{:lang => "en"}
+  %head
+    %meta{:content => "text/html; charset=utf-8", "http-equiv" => "Content-Type"}/
+    
+    %title HttpIt !!!
+    
+    %link{ :rel => "stylesheet", :type => "text/css", :href => "/main.sass.css" }
+    
+  %body
+    #wrap
+      %h1 HttpIt is awesome
+      
+      %pre.code.usage
+        :preserve
+          $ sudo gem install httpit
+          $ cd /folder/for/server
+          $ httpit
+          # or you can set port
+          $ httpit &lt;port number&gt;
+
+      %p
+        %a{ :href => "/images/bird.jpg" } Static file
+      
+      %p
+        %a{ :href => "/readme.md" } MarkDown example
+        
+      %p
+        %a{ :href => "/images" } Gallery folder
