@@ -45,7 +45,7 @@ get '/' do
   elsif File.file?('./index.haml')
     haml :index
   else
-    @folder = ''
+    @path = ''
     @files = get_content.select {|f| f[0] != '.' && f[0] != '..' }
     haml :listing
   end
@@ -117,6 +117,7 @@ __END__
     :margin-left 20px
 </style>
 #wrap
+  = @path
   %h1
     %span Folder: 
     = @path == '' ? '/' : @path
