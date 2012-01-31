@@ -4,16 +4,20 @@ Build on sinatra, useful for developing JS applications and doing "psd => xhtml"
 
 ## Usage
 
-    $ sudo gem install httpit
-    $ cd /folder/for/server
-    $ httpit
-    # or you can set port
-    $ httpit <port number>
+```bash
+gem install httpit
+cd /folder/for/server
+httpit
+# or you can set port
+httpit 9081
+```
 
 ## Features
 
 * Haml support
-* Sass support
+* Sass support 
 * MarkDown support
+
+To complile `sass` file make request for `style.sass.css`
 
 See example
