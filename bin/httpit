@@ -58,7 +58,7 @@ def get_content(folder = nil, sort = nil)
       elsif file_path.symlink?;   :link
       end,
       
-      !!`file #{file_path.to_s}`.sub(file_path.to_s, '').index(/text/i)
+      !!`file "#{file_path.to_s.gsub(?", '\"')}"`.sub(file_path.to_s, '').index(/text/i)
     ]
   end
 end
