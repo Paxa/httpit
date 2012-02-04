@@ -4,11 +4,29 @@ require 'rubygems'
 require 'sinatra'
 require 'haml'
 require 'redcloth'
+require "pathname"
 
-ROOT = Dir.pwd
+GEM_ROOT = Pathname.new(__FILE__).dirname.join("..").expand_path
+
+require GEM_ROOT + "lib/search"
+
+ROOT = Pathname.pwd
+
+# this hack allow 
+# /some/folder/with/content + /subfolder => /some/folder/with/content/subfolder
+
+class <<ROOT
+  def join(*args)
+    super *args.map{|a| a.is_a?(String) && a[0] == ?/ ? a[1 .. a.size] : a }
+  end
+
+  def +(a)
+    super(a.is_a?(String) && a[0] == ?/ ? a[1 .. a.size] : a)
+  end
+end
 
 set :views, ROOT
-set :public,   ROOT
+set :public_folder, ROOT
 set :app_file, $0
 
 set :static, false
@@ -20,41 +38,46 @@ end
 
 
 # build array of contents and theris type for specified folder
-def get_content folder = nil
-  # building absolute path
-  abs_path = folder ? File.join(ROOT, folder) : ROOT
+def get_content(folder = nil)
+  abs_path = folder ? ROOT + folder : ROOT
   
-  # build array if pairs: [filename, :type]
-  Dir.entries(abs_path).map do |obj|
+  # build array if pairs: [filename, :type, is_textfile]
+  abs_path.entries.map do |obj|
+    file_path = abs_path + obj
     [obj, 
-      if File.file? File.join(abs_path, obj)
-        :file
-      elsif File.directory? File.join(abs_path, obj)
-        :dir
-      elsif File.symlink? File.join(abs_path, obj)
-        :link
-      end
+      if file_path.file?;         :file
+      elsif file_path.directory?; :dir
+      elsif file_path.symlink?;   :link
+      end,
+      
+      !!`file #{file_path.to_s}`.sub(file_path.to_s, '').index(/text/i)
     ]
   end
 end
+
+def view(tpl)
+  (Pathname.new(__FILE__).dirname + "../views/#{tpl}.haml").read
+end
+
+include Search
 
 # shows index.html or folder contents if index.html does not exists
 get '/' do 
   if File.file?('./index.html')
     File.open('./index.html') {|f| f.read }
   elsif File.file?('./index.haml')
-    haml :index
+    haml view(:index)
   else
     @path = ''
     @files = get_content.select {|f| f[0] != '.' && f[0] != '..' }
-    haml :listing
+    haml view(:listing)
   end
 end
 
 get '/__img_preview' do
-  params[:file] = params[:file].gsub ' ', '\ '
+  params[:file] = params[:file].gsub(' ', '\ ')
   tmppath = "/tmp/httpit_preview_#{Time.now.to_i}.jpeg"
-  `convert #{File.join ROOT, params[:file]} -resize 1024 -quality 100% #{tmppath}`
+  `convert #{ROOT + params[:file]} -resize 1024 -quality 100% #{tmppath}`
   content_type "image/jpeg"
   content = File.open(tmppath, 'rb') { |f| f.read }
   File.delete(tmppath)
@@ -64,21 +87,21 @@ end
 # shows folder contents
 get %r{.+} do
   return nil if request.path == '/favicon.ico'
-  @path = request.path
+  @path = URI.unescape(request.path)
   
-  abs_path = File.join(ROOT, @path)
+  abs_path = ROOT + @path
   
   if @path =~ /.+\.sass\.css/
+    return halt(404) unless File.file?(abs_path.to_s.chomp('.css'))
     content_type :css
     sass @path.chomp('.sass.css').to_sym
     
-  elsif !File.file?(abs_path) && !File.directory?(abs_path)
+  elsif !abs_path.file? && !abs_path.directory?
     halt 404
 
   elsif @path =~ /.+\.md/
     content_type :html
-    content = File.open(abs_path) {|f| f.read }
-    return RedCloth.new(content).to_html
+    return RedCloth.new(abs_path.read).to_html
     
   elsif @path =~ /.+\.haml/
     haml @path.chomp('.haml').to_sym
@@ -88,65 +111,11 @@ get %r{.+} do
     
   else
     @files = get_content(@path)
-    haml :listing
+    haml view(:listing)
   end
 end
 
 error 404 do
   @path = request.path
-  haml :not_found
+  haml view(:not_found)
 end
-
-__END__
-
-@@ listing
-<style type="text/css">
-:sass
-  #wrap
-    :width 800px
-    :margin 50 auto
-
-  span
-    :color #777
-      
-  ul, li
-    :list-style-type none
-    
-  .preview_link
-    :color #55a075
-    :margin-left 20px
-</style>
-#wrap
-  = @path
-  %h1
-    %span Folder: 
-    = @path == '' ? '/' : @path
-    - if @path != ''
-      %a{:href => "#{@path}/.."} &larr;
-
-  %ul
-    - for file in @files
-      %li
-        - if file[1] == :file
-          %span= "&ndash;"
-        - elsif file[1] == :dir
-          %span= "+"
-        - elsif file[1] == :link
-          %span= "&rarr;"
-          
-        %a{:href => "#{@path}/#{file[0]}"}= file[0]
-        
-        - if %w{.jpg .jpeg .png .gif}.include?(File.extname(file[0]).downcase)
-          %a{:href => "/__img_preview?file=#{@path}/#{file[0]}", :class => "preview_link"} #1024
-
-@@ not_found
-<style type="text/css">
-:sass
-  #wrap
-    :width 800px
-    :margin 50 auto
-</style>
-#wrap
-  %h1 File not found
-  
-  %h3= "You requested <i>#{@path}</i>"

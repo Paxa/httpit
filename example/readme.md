@@ -6,4 +6,4 @@ h2. Heading 2 gets more specific
 
 Now we're getting into the details.
 
-!/images/bird.jpg(This page is valid HTML)!
+!images/bird.jpg(This page is valid HTML)!
