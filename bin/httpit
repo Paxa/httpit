@@ -38,11 +38,19 @@ end
 
 
 # build array of contents and theris type for specified folder
-def get_content(folder = nil)
+def get_content(folder = nil, sort = nil)
   abs_path = folder ? ROOT + folder : ROOT
   
   # build array if pairs: [filename, :type, is_textfile]
-  abs_path.entries.map do |obj|
+  sorter = case sort
+    when 'name' then '| sort -f'
+    when 'ctime' then '-c'
+    when 'mtime' then '--sort=time'
+    when 'size' then '--sort=size'
+    else ''
+  end
+  
+  `cd #{abs_path} && ls -A #{sorter}`.split("\n").map do |obj|
     file_path = abs_path + obj
     [obj, 
       if file_path.file?;         :file
@@ -69,7 +77,7 @@ get '/' do
     haml view(:index)
   else
     @path = ''
-    @files = get_content.select {|f| f[0] != '.' && f[0] != '..' }
+    @files = get_content(nil, params[:sort]).select {|f| f[0] != '.' && f[0] != '..' }
     haml view(:listing)
   end
 end
@@ -110,7 +118,7 @@ get %r{.+} do
     send_file(abs_path)
     
   else
-    @files = get_content(@path)
+    @files = get_content(@path, params[:sort])
     haml view(:listing)
   end
 end

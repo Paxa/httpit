@@ -9,7 +9,11 @@
       
   ul, li
     :list-style-type none
-    
+  
+  ul > header
+    :font-style italic
+    :margin-bottom 11px
+  
   .preview_link
     :color #55a075
     :margin-left 20px
@@ -64,6 +68,12 @@
   
 
   %ul
+    %header
+      Sort
+      %select.sorting
+        - for key in %w{name size ctime mtime}
+          %option{params[:sort] == key ? {:selected => "selected"} : {}}= key
+      
     - for file in @files
       %li
         - if file[1] == :file

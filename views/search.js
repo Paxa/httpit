@@ -51,3 +51,9 @@ function hideResults (e) {
 $('input[type=search]').addEventListener('change', hideResults, false);
 $('input[type=search]').addEventListener('keyup', hideResults, false);
 $('input[type=search]').addEventListener('click', hideResults, false);
+
+$('.sorting').addEventListener('change', function(e) {
+  var clean_path = (window.location + '').replace(/(\?|&)sort=[^=]*/, '');
+  clean_path += (clean_path.indexOf('?') == -1 ? '?' : '&') + 'sort=' + e.target.value
+  window.location = clean_path;
+}, false);
