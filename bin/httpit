@@ -50,7 +50,7 @@ def get_content(folder = nil, sort = nil)
     else ''
   end
   
-  `cd #{abs_path} && ls -A #{sorter}`.split("\n").map do |obj|
+  `cd "#{abs_path.to_s.gsub(?", '\"')}" && ls -A #{sorter}`.split("\n").map do |obj|
     file_path = abs_path + obj
     [obj, 
       if file_path.file?;         :file
