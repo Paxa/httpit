@@ -1,0 +1,56 @@
+$line: 20px
+$pageWidth: 800px
+$asideRation: 5 / 21
+body
+  :margin 0
+  :padding 0
+  :font
+    :size 14px
+    :family Arial, sans-serif
+  a
+    :color #2468a5
+  > #wrapper
+    :width $pageWidth
+    :margin $line auto
+    > header
+      :border-bottom 1px solid #ccc
+      :margin-bottom $line
+      h1
+        :color #36333e
+        :margin-bottom $line / -2
+        :font-family serif
+      h2
+        :color #393e4d
+        :font-size 1.3em
+
+    > .content
+      .top-line
+        :text-align center
+        :font-style italic
+        :background #f6e5e4
+        :padding $line / 2 0
+        :margin-bottom $line
+      > aside, > .main-column
+        :display inline-block
+        :vertical-align top
+        :line-height 23px
+        h3
+          :margin
+            :bottom 23px
+            :top 0
+        p
+          :margin-bottom 23px
+      > aside
+        :margin-top 46px
+        :width $asideRation * $pageWidth
+        :line-height 20px
+        h4
+          :margin
+            :bottom 11px
+            :top 0px
+          :color #393e4d
+        ul
+          :margin 0
+          :padding-left 17px
+      > .main-column
+        :width $pageWidth - $asideRation * $pageWidth

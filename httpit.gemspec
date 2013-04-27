@@ -2,7 +2,7 @@ Gem::Specification.new do |s|
   s.name              = "httpit"
   s.version           = "0.4"
   s.summary           = "Web server for static files"
-  s.description       = "Just go to folder and run `httpit`"
+  s.description       = "Just go to folder and run `httpit` to make it avaliable as web-server"
   s.author            = "Pavel Evstigneev"
   s.email             = "pavel.evst@gmail.com"
   s.homepage          = "http://github.com/Paxa/httpit"
@@ -11,8 +11,8 @@ Gem::Specification.new do |s|
   s.rubyforge_project = "httpit"
   s.files             = `git ls-files`.split("\n")
   
-  s.add_runtime_dependency 'sinatra', ">= 1.0"
-  s.add_runtime_dependency 'haml', '>= 3.0.10'
-  s.add_runtime_dependency 'RedCloth', ">= 4.2.3"
-  s.add_runtime_dependency 'rufus-tokyo', ">= 1.0.7"
+  s.add_runtime_dependency 'sinatra', "~> 1.4.2"
+  s.add_runtime_dependency 'haml', '~> 4.0.2'
+  s.add_runtime_dependency 'RedCloth', "~> 4.2.9"
+  s.add_runtime_dependency 'sass', "~> 3.2.8"
 end

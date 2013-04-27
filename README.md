@@ -20,4 +20,4 @@ httpit 9081
 
 To complile `sass` file make request for `style.sass.css`
 
-See example
+See `example` folder

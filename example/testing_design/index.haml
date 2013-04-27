@@ -1,0 +1,50 @@
+!!! 5
+%html{:lang => "en"}
+  %head
+    %meta{:content => "text/html; charset=utf-8", "http-equiv" => "Content-Type"}/
+    %title Testing layout
+    %link{:rel => "stylesheet", :type => "text/css", :href => "#{@dirname}/layout.sass.css"}
+
+  %body
+    #wrapper
+      = haml :"#{@dirname}/_header"
+      .content
+        .top-line
+          This is example layout to show how gem "#{"<b>httpit</b>"}" in action
+
+        %aside>
+          %h4 For example:
+          %ul
+            %li 2/1 = 2.0
+            %li 3/2 = 1.5
+            %li 5/3 = 1.67
+            %li 8/5 = 1.6
+            %li 13/8 = 1.625
+            %li 21/13 = 1.615
+            %li 34/21 = 1.619
+            %li 55/34 = 1.6176
+          
+        .main-column>
+          %h3 The Fibonacci Sequence
+          %p
+            The mathematics behind the golden ratio is heavily connected to the
+            = succeed "." do
+              %a{:href => "http://en.wikipedia.org/wiki/Fibonacci_sequence"} Fibonacci Sequence
+            If you’re unfamiliar with the fibonacci sequence,
+            it begins by definition with the numbers 0, 1 and then each successive number
+            in the sequence is the sum of the previous two numbers.
+
+          %p 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55…
+
+          %p
+            I’ll spare you the deep mathematics talk (we’ll just do a bit of division),
+            since what we’re mainly interested in is how the sequence relates to the
+            = succeed "." do
+              %a{:href => "http://freemasonry.bcy.ca/symbolism/golden_ratio/index.html"} golden section
+
+          %p
+            If you take any number in the sequence and divide it by the previous
+            number the result approximates Phi or the golden ratio.
+          %p
+            With early numbers in the sequence this may not appear to be true,
+            but as we continue along the sequence the division approaches 1.618 rather quickly.

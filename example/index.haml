@@ -10,20 +10,23 @@
   %body
     #wrap
       %h1 HttpIt is awesome
-      
+
       %pre.code.usage
         :preserve
-          $ sudo gem install httpit
+          $ gem install httpit
           $ cd /folder/for/server
           $ httpit
           # or you can set port
-          $ httpit &lt;port number&gt;
+          $ httpit 8889
 
       %p
         %a{ :href => "images/bird.jpg" } Static file
-      
+
       %p
         %a{ :href => "readme.md" } MarkDown example
-        
+
       %p
         %a{ :href => "images" } Gallery folder
+
+      %p
+        %a{ :href => "testing_design" } Full-stack layout example

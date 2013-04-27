@@ -1,93 +1,62 @@
-<style type="text/css">
-:sass
-  #wrap
-    :width 800px
-    :margin 30 auto 50px
-    
-  span
-    :color #777
-      
-  ul, li
-    :list-style-type none
-  
-  ul > header
-    :font-style italic
-    :margin-bottom 11px
-  
-  .preview_link
-    :color #55a075
-    :margin-left 20px
-    
-  input[type=search]
-    :width 300px
-  input[type=submit]
-    :display none
-  
-  = box-shadow($value)
-    :box-shadow $value
-    :-moz-box-shadow $value
-    :-webkit-box-shadow $value
-      
-  #files_search
-    > .results
-      :display none
-      :background #fff
-      +box-shadow(1px 1px 5px rgba(125, 125, 125, 0.7))
-      :width 620px
-      :position relative
-      :top 7px
-      :padding 5px 15px
-      em
-        :background-color yellow
-      ul
-        :padding 0
-        :margin 0
-        li
-          :margin 3px 0
-          :font-size 13px
-          &:hover
-            :background-color #def
-    &.loading
-      > .results
-        :display block
-</style>
+!!! 5
+%html(lang="en")
+  %head
+    <style type="text/css">
+    :sass
+      #wrap
+        :width 800px
+        :margin 30 auto 50px
 
-#wrap
-  .search
-    %form#files_search{:action => "/__search"}
-      %input{:type => "hidden", :name => "path", :value => @path}
-      %input{:type => "search", :placeholder => "Search...", :name => 'q', :value => params[:q]}
-      %input{:type => "submit"}
-      .results Finding...
-      
-  %h1
-    %span Folder: 
-    = @path == '' ? '/' : @path
-    - if @path != ''
-      %a{:href => @path.gsub(%r{/[^/]+/?$}, '') + '/'} &larr;
+      span
+        :color #777
+
+      ul, li
+        :list-style-type none
+
+      ul > header
+        :font-style italic
+        :margin-bottom 11px
+
+      .preview_link
+        :color #55a075
+        :margin-left 20px
+
+      input[type=search]
+        :width 300px
+      input[type=submit]
+        :display none
+    </style>
+    
+  %body
+    #wrap
+      %h1
+        %span Folder: 
+        = @path == '' ? '/' : @path
+        - if @path != ''
+          %a{:href => @path.gsub(%r{/[^/]+/?$}, '') + '/'} &larr;
   
 
-  %ul
-    %header
-      Sort
-      %select.sorting
-        - for key in %w{name size ctime mtime}
-          %option{params[:sort] == key ? {:selected => "selected"} : {}}= key
+      %ul
+        %header
+          Sort
+          %select.sorting
+            - for key in %w{name size ctime mtime}
+              %option{params[:sort] == key ? {:selected => "selected"} : {}}= key
       
-    - for file in @files
-      %li
-        - if file[1] == :file
-          %span= "&ndash;"
-        - elsif file[1] == :dir
-          %span= "+"
-        - elsif file[1] == :link
-          %span= "&rarr;"
+        - for file in @files
+          %li
+            - if file[1] == :file
+              %span= "&ndash;"
+            - elsif file[1] == :dir
+              %span= "+"
+            - elsif file[1] == :link
+              %span= "&rarr;"
           
-        %a{:href => "#{@path}/#{file[0]}"}= file[0]
+            %a{:href => "#{@path}/#{file[0]}"}= file[0]
         
-        - if %w{.jpg .jpeg .png .gif}.include?(File.extname(file[0]).downcase)
-          %a{:href => "/__img_preview?file=#{@path}/#{file[0]}", :class => "preview_link"} #1024
-        - if file[2]
-          %a{:href => "/__view?file=#{@path}/#{file[0]}", :class => "preview_link"} view
+            - if %w{.jpg .jpeg .png .gif}.include?(File.extname(file[0]).downcase)
+              %a{:href => "/__img_preview?file=#{@path}/#{file[0]}", :class => "preview_link"} #1024
+            - if file[2]
+              %a{:href => "/__view?file=#{@path}/#{file[0]}", :class => "preview_link"} view
 
-%script{:type => "text/javascript"}= GEM_ROOT.join('views/search.js').read
+    %script{:type => "text/javascript"}= GEM_ROOT.join('views/utils.js').read

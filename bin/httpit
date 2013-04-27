@@ -1,21 +1,20 @@
 #!/usr/bin/env ruby
+require "rubygems"
+require "bundler/setup"
 
-require 'rubygems'
 require 'sinatra'
 require 'haml'
+require 'sass'
 require 'redcloth'
 require "pathname"
 
 GEM_ROOT = Pathname.new(__FILE__).dirname.join("..").expand_path
-
-require GEM_ROOT + "lib/search"
-
 ROOT = Pathname.pwd
 
 # this hack allow 
 # /some/folder/with/content + /subfolder => /some/folder/with/content/subfolder
 
-class <<ROOT
+class << ROOT
   def join(*args)
     super *args.map{|a| a.is_a?(String) && a[0] == ?/ ? a[1 .. a.size] : a }
   end
@@ -49,7 +48,7 @@ def get_content(folder = nil, sort = nil)
     when 'size' then '--sort=size'
     else ''
   end
-  
+
   `cd "#{abs_path.to_s.gsub(?", '\"')}" && ls -A #{sorter}`.split("\n").map do |obj|
     file_path = abs_path + obj
     [obj, 
@@ -64,17 +63,23 @@ def get_content(folder = nil, sort = nil)
 end
 
 def view(tpl)
-  (Pathname.new(__FILE__).dirname + "../views/#{tpl}.haml").read
+  Pathname.new(__FILE__).dirname.join("../views/#{tpl}.haml").expand_path.read
 end
 
-include Search
+def folder_view(tpl, format)
+  if ROOT.join("#{tpl}.#{format}").file?
+    tpl.to_sym
+  else
+    nil
+  end
+end
 
 # shows index.html or folder contents if index.html does not exists
 get '/' do 
-  if File.file?('./index.html')
-    File.open('./index.html') {|f| f.read }
-  elsif File.file?('./index.haml')
-    haml view(:index)
+  if ROOT.join('./index.html').file?
+    ROOT.join('./index.html').read
+  elsif folder_view(:index, :haml)
+    haml folder_view(:index, :haml)
   else
     @path = ''
     @files = get_content(nil, params[:sort]).select {|f| f[0] != '.' && f[0] != '..' }
@@ -96,14 +101,15 @@ end
 get %r{.+} do
   return nil if request.path == '/favicon.ico'
   @path = URI.unescape(request.path)
-  
+
   abs_path = ROOT + @path
-  
+  @dirname = abs_path.file? ? File.dirname(@path) : @path.chomp('/')
+
   if @path =~ /.+\.sass\.css/
     return halt(404) unless File.file?(abs_path.to_s.chomp('.css'))
     content_type :css
     sass @path.chomp('.sass.css').to_sym
-    
+
   elsif !abs_path.file? && !abs_path.directory?
     halt 404
 
@@ -113,10 +119,18 @@ get %r{.+} do
     
   elsif @path =~ /.+\.haml/
     haml @path.chomp('.haml').to_sym
-      
+
   elsif File.file?(abs_path)
     send_file(abs_path)
-    
+
+  elsif abs_path.join('./index.html').file?
+    content_type :html
+    abs_path.join('./index.html').read
+
+  elsif abs_path.join('./index.haml').file?
+    content_type :html
+    haml File.join(@path, 'index').to_sym
+
   else
     @files = get_content(@path, params[:sort])
     haml view(:listing)
