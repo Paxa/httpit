@@ -2,18 +2,21 @@
 require "rubygems"
 require "bundler/setup"
 
-require 'sinatra'
+require 'sinatra/base'
 require 'haml'
 require 'sass'
 require 'redcloth'
 require "pathname"
+require "fileutils"
 
 GEM_ROOT = Pathname.new(__FILE__).dirname.join("..").expand_path
 ROOT = Pathname.pwd
 
+TMP_DIR = File.expand_path("#{Dir.tmpdir}/#{Time.now.to_i}#{rand(1000)}/")
+FileUtils.mkdir_p(TMP_DIR)
+
 # this hack allow 
 # /some/folder/with/content + /subfolder => /some/folder/with/content/subfolder
-
 class << ROOT
   def join(*args)
     super *args.map{|a| a.is_a?(String) && a[0] == ?/ ? a[1 .. a.size] : a }
@@ -24,120 +27,124 @@ class << ROOT
   end
 end
 
-set :views, ROOT
-set :public_folder, ROOT
-set :app_file, $0
-
-set :static, false
-
 # only one parametr - port number
 if ARGV.size > 0
   set :port, ARGV.first.to_i
 end
 
+class HttpIt < Sinatra::Base
+  set :views, ROOT
+  set :public_folder, ROOT
+  set :app_file, $0
+  set :static, false
+  set :sass, :cache => true, :cache_location => File.join(TMP_DIR, 'sass-cache')
 
-# build array of contents and theris type for specified folder
-def get_content(folder = nil, sort = nil)
-  abs_path = folder ? ROOT + folder : ROOT
+  # build array of contents and theris type for specified folder
+  def get_content(folder = nil, sort = nil)
+    abs_path = folder ? ROOT + folder : ROOT
   
-  # build array if pairs: [filename, :type, is_textfile]
-  sorter = case sort
-    when 'name' then '| sort -f'
-    when 'ctime' then '-c'
-    when 'mtime' then '--sort=time'
-    when 'size' then '--sort=size'
-    else ''
-  end
+    # build array if pairs: [filename, :type, is_textfile]
+    sorter = case sort
+      when 'name' then '| sort -f'
+      when 'ctime' then '-c'
+      when 'mtime' then '--sort=time'
+      when 'size' then '--sort=size'
+      else ''
+    end
 
-  `cd "#{abs_path.to_s.gsub(?", '\"')}" && ls -A #{sorter}`.split("\n").map do |obj|
-    file_path = abs_path + obj
-    [obj, 
-      if file_path.file?;         :file
-      elsif file_path.directory?; :dir
-      elsif file_path.symlink?;   :link
-      end,
+    `cd "#{abs_path.to_s.gsub(?", '\"')}" && ls -A #{sorter}`.split("\n").map do |obj|
+      file_path = abs_path + obj
+      [obj,
+        if file_path.file?;         :file
+        elsif file_path.directory?; :dir
+        elsif file_path.symlink?;   :link
+        end,
       
-      !!`file "#{file_path.to_s.gsub(?", '\"')}"`.sub(file_path.to_s, '').index(/text/i)
-    ]
+        !!`file "#{file_path.to_s.gsub(?", '\"')}"`.sub(file_path.to_s, '').index(/text/i)
+      ]
+    end
   end
-end
 
-def view(tpl)
-  Pathname.new(__FILE__).dirname.join("../views/#{tpl}.haml").expand_path.read
-end
-
-def folder_view(tpl, format)
-  if ROOT.join("#{tpl}.#{format}").file?
-    tpl.to_sym
-  else
-    nil
+  def view(tpl)
+    Pathname.new(__FILE__).dirname.join("../views/#{tpl}.haml").expand_path.read
   end
-end
 
-# shows index.html or folder contents if index.html does not exists
-get '/' do 
-  if ROOT.join('./index.html').file?
-    ROOT.join('./index.html').read
-  elsif folder_view(:index, :haml)
-    haml folder_view(:index, :haml)
-  else
-    @path = ''
-    @files = get_content(nil, params[:sort]).select {|f| f[0] != '.' && f[0] != '..' }
-    haml view(:listing)
+  def folder_view(tpl, format)
+    if ROOT.join("#{tpl}.#{format}").file?
+      tpl.to_sym
+    else
+      nil
+    end
   end
-end
 
-get '/__img_preview' do
-  params[:file] = params[:file].gsub(' ', '\ ')
-  tmppath = "/tmp/httpit_preview_#{Time.now.to_i}.jpeg"
-  `convert #{ROOT + params[:file]} -resize 1024 -quality 100% #{tmppath}`
-  content_type "image/jpeg"
-  content = File.open(tmppath, 'rb') { |f| f.read }
-  File.delete(tmppath)
-  content
-end
+  # shows index.html or folder contents if index.html does not exists
+  get '/' do
+    if ROOT.join('./index.html').file?
+      ROOT.join('./index.html').read
+    elsif folder_view(:index, :haml)
+      haml folder_view(:index, :haml)
+    else
+      @path = ''
+      @files = get_content(nil, params[:sort]).select {|f| f[0] != '.' && f[0] != '..' }
+      haml view(:listing)
+    end
+  end
 
-# shows folder contents
-get %r{.+} do
-  return nil if request.path == '/favicon.ico'
-  @path = URI.unescape(request.path)
+  get '/__img_preview' do
+    params[:file] = params[:file].gsub(' ', '\ ')
+    tmppath = "/tmp/httpit_preview_#{Time.now.to_i}.jpeg"
+    `convert #{ROOT + params[:file]} -resize 1024 -quality 100% #{tmppath}`
+    content_type "image/jpeg"
+    content = File.open(tmppath, 'rb') { |f| f.read }
+    File.delete(tmppath)
+    content
+  end
 
-  abs_path = ROOT + @path
-  @dirname = abs_path.file? ? File.dirname(@path) : @path.chomp('/')
+  # shows folder contents
+  get %r{.+} do
+    return nil if request.path == '/favicon.ico'
+    @path = URI.unescape(request.path)
 
-  if @path =~ /.+\.sass\.css/
-    return halt(404) unless File.file?(abs_path.to_s.chomp('.css'))
-    content_type :css
-    sass @path.chomp('.sass.css').to_sym
+    abs_path = ROOT + @path
+    @dirname = abs_path.file? ? File.dirname(@path) : @path.chomp('/')
 
-  elsif !abs_path.file? && !abs_path.directory?
-    halt 404
+    if @path =~ /.+\.sass\.css/
+      return halt(404) unless File.file?(abs_path.to_s.chomp('.css'))
+      content_type :css
+      sass @path.chomp('.sass.css').to_sym
 
-  elsif @path =~ /.+\.md/
-    content_type :html
-    return RedCloth.new(abs_path.read).to_html
+    elsif !abs_path.file? && !abs_path.directory?
+      halt 404
+
+    elsif @path =~ /.+\.md/
+      content_type :html
+      return RedCloth.new(abs_path.read).to_html
     
-  elsif @path =~ /.+\.haml/
-    haml @path.chomp('.haml').to_sym
+    elsif @path =~ /.+\.haml/
+      haml @path.chomp('.haml').to_sym
 
-  elsif File.file?(abs_path)
-    send_file(abs_path)
+    elsif File.file?(abs_path)
+      send_file(abs_path)
 
-  elsif abs_path.join('./index.html').file?
-    content_type :html
-    abs_path.join('./index.html').read
+    elsif abs_path.join('./index.html').file?
+      content_type :html
+      abs_path.join('./index.html').read
 
-  elsif abs_path.join('./index.haml').file?
-    content_type :html
-    haml File.join(@path, 'index').to_sym
+    elsif abs_path.join('./index.haml').file?
+      content_type :html
+      haml File.join(@path, 'index').to_sym
 
-  else
-    @files = get_content(@path, params[:sort])
-    haml view(:listing)
+    else
+      @files = get_content(@path, params[:sort])
+      haml view(:listing)
+    end
+  end
+
+  error 404 do
+    @path = request.path
+    haml view(:not_found)
   end
 end
 
-error 404 do
-  @path = request.path
-  haml view(:not_found)
-end
+HttpIt.run!
+at_exit { FileUtils.rm_rf(TMP_DIR) if File.exists?(TMP_DIR) }
