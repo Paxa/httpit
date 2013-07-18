@@ -1,15 +1,18 @@
 #!/usr/bin/env ruby
 require "rubygems"
-require "bundler/setup"
 
+require "fileutils"
+require "pathname"
+
+GEM_ROOT = Pathname.new(__FILE__).dirname.join("..").expand_path
+ENV['BUNDLE_GEMFILE'] ||= GEM_ROOT.join("Gemfile").to_s
+
+require "bundler/setup"
 require 'sinatra/base'
 require 'haml'
 require 'sass'
 require 'redcloth'
-require "pathname"
-require "fileutils"
 
-GEM_ROOT = Pathname.new(__FILE__).dirname.join("..").expand_path
 ROOT = Pathname.pwd
 
 TMP_DIR = File.expand_path("#{Dir.tmpdir}/#{Time.now.to_i}#{rand(1000)}/")
@@ -38,6 +41,17 @@ class HttpIt < Sinatra::Base
   set :app_file, $0
   set :static, false
   set :sass, :cache => true, :cache_location => File.join(TMP_DIR, 'sass-cache')
+
+  helpers do
+    def with_layout(template, &block)
+      content = capture_haml do
+        yield
+      end
+      haml(template.to_sym, :layout => false) do
+        content
+      end
+    end
+  end
 
   # build array of contents and theris type for specified folder
   def get_content(folder = nil, sort = nil)
