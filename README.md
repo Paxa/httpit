@@ -21,3 +21,9 @@ httpit 9081
 To complile `sass` file make request for `style.sass.css`
 
 See `example` folder
+
+## Use cases
+
+* Develop websites with HAML & SASS but without backend
+* Share files to mobile devices (if we access over Wi-Fi)
+* Try some 3rd-party examples what requires absolute urls (src="/files/...")

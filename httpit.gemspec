@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name              = "httpit"
-  s.version           = "0.4.3"
+  s.version           = "0.4.4"
   s.summary           = "Web server for static files"
   s.description       = "Just go to folder and run `httpit` to make it avaliable as web-server"
   s.author            = "Pavel Evstigneev"
@@ -10,6 +10,7 @@ Gem::Specification.new do |s|
   s.executables       = ["httpit"]
   s.rubyforge_project = "httpit"
   s.files             = `git ls-files`.split("\n")
+  s.licenses          = ['MIT', 'GPL-2']
   
   s.add_runtime_dependency 'sinatra', "~> 1.4.2"
   s.add_runtime_dependency 'haml', '~> 4.0.2'
