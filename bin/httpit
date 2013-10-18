@@ -51,6 +51,10 @@ class HttpIt < Sinatra::Base
         content
       end
     end
+
+    def file_url(path, file)
+      "#{path}/#{CGI::escape(file)}"
+    end
   end
 
   # build array of contents and theris type for specified folder
@@ -117,7 +121,7 @@ class HttpIt < Sinatra::Base
   # shows folder contents
   get %r{.+} do
     return nil if request.path == '/favicon.ico'
-    @path = URI.unescape(request.path)
+    @path = CGI::unescape(request.path)
 
     abs_path = ROOT + @path
     @dirname = abs_path.file? ? File.dirname(@path) : @path.chomp('/')

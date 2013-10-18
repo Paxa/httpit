@@ -52,7 +52,7 @@
             - elsif file[1] == :link
               %span= "&rarr;"
           
-            %a{:href => "#{@path}/#{file[0]}"}= file[0]
+            %a{:href => file_url(@path, file[0])}= file[0]
         
             - if %w{.jpg .jpeg .png .gif}.include?(File.extname(file[0]).downcase)
               %a{:href => "/__img_preview?file=#{@path}/#{file[0]}", :class => "preview_link"} #1024
