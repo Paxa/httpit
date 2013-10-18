@@ -53,7 +53,8 @@ class HttpIt < Sinatra::Base
     end
 
     def file_url(path, file)
-      "#{path}/#{CGI::escape(file)}"
+      path = "#{path}/#{file}"
+      path.split("/").map {|p| CGI::escape(p) }.join('/')
     end
   end
 
