@@ -12,6 +12,8 @@ httpit
 httpit 9081
 ```
 
+![screen shot 2013-12-25 at 10 39 44 am](https://f.cloud.github.com/assets/26019/1807805/598cf174-6d16-11e3-9553-494ff5a8f337.png)
+
 ## Features
 
 * Haml support

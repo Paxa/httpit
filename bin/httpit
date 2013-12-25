@@ -1,8 +1,10 @@
 #!/usr/bin/env ruby
+
 require "rubygems"
 
 require "fileutils"
 require "pathname"
+require 'shellwords'
 
 GEM_ROOT = Pathname.new(__FILE__).dirname.join("..").expand_path
 ENV['BUNDLE_GEMFILE'] ||= GEM_ROOT.join("Gemfile").to_s
@@ -11,12 +13,20 @@ require "bundler/setup"
 require 'sinatra/base'
 require 'haml'
 require 'sass'
+require 'sass/plugin'
 require 'redcloth'
 
 ROOT = Pathname.pwd
 
 TMP_DIR = File.expand_path("#{Dir.tmpdir}/#{Time.now.to_i}#{rand(1000)}/")
 FileUtils.mkdir_p(TMP_DIR)
+
+class Tilt::SassTemplate
+  alias_method :sass_options_original, :sass_options
+  def sass_options
+    sass_options_original.merge(:cache_location => File.join(TMP_DIR, 'sass-cache'))
+  end
+end
 
 # this hack allow 
 # /some/folder/with/content + /subfolder => /some/folder/with/content/subfolder
@@ -40,7 +50,7 @@ class HttpIt < Sinatra::Base
   set :public_folder, ROOT
   set :app_file, $0
   set :static, false
-  set :sass, :cache => true, :cache_location => File.join(TMP_DIR, 'sass-cache')
+  set :sass, :cache => false, :cache_location => File.join(TMP_DIR, 'sass-cache')
 
   helpers do
     def with_layout(template, &block)
@@ -52,10 +62,16 @@ class HttpIt < Sinatra::Base
       end
     end
 
-    def file_url(path, file)
+    def file_url(path, file, type = nil)
       path = "#{path}/#{file}"
-      path.split("/").map {|p| CGI::escape(p) }.join('/')
+      path.split("/").map {|p| CGI::escape(p) }.join('/') + (type == :dir ? '/' : '')
     end
+  end
+
+  def list_files(path, sorter)
+    cmd = %{cd "#{path.to_s.shellescape}" && ls -A #{sorter}}
+    result = `#{cmd}`.force_encoding(Encoding::UTF_8)
+    result.split("\n")
   end
 
   # build array of contents and theris type for specified folder
@@ -71,15 +87,15 @@ class HttpIt < Sinatra::Base
       else ''
     end
 
-    `cd "#{abs_path.to_s.gsub(?", '\"')}" && ls -A #{sorter}`.split("\n").map do |obj|
+    list_files(abs_path, sorter).map do |obj|
       file_path = abs_path + obj
       [obj,
         if file_path.file?;         :file
         elsif file_path.directory?; :dir
         elsif file_path.symlink?;   :link
         end,
-      
-        !!`file "#{file_path.to_s.gsub(?", '\"')}"`.sub(file_path.to_s, '').index(/text/i)
+        
+        !!`file "#{file_path.to_s.shellescape}"`.force_encoding(Encoding::UTF_8).sub(file_path.to_s, '').index(/text/i)
       ]
     end
   end
@@ -110,13 +126,27 @@ class HttpIt < Sinatra::Base
   end
 
   get '/__img_preview' do
-    params[:file] = params[:file].gsub(' ', '\ ')
+    params[:file] = params[:file].shellescape
     tmppath = "/tmp/httpit_preview_#{Time.now.to_i}.jpeg"
     `convert #{ROOT + params[:file]} -resize 1024 -quality 100% #{tmppath}`
     content_type "image/jpeg"
     content = File.open(tmppath, 'rb') { |f| f.read }
     File.delete(tmppath)
     content
+  end
+
+  get '/__view' do
+    params[:file] = params[:file].shellescape.sub(/^.\//, '/')
+    begin
+      @content = File.open(ROOT + params[:file], 'r:utf-8', &:read)
+      haml view(:view)
+    rescue Errno::ENOENT => e
+      if e.message =~ /No such file or directory/
+        halt 404
+      else
+        raise e
+      end
+    end
   end
 
   # shows folder contents
@@ -160,7 +190,7 @@ class HttpIt < Sinatra::Base
   end
 
   error 404 do
-    @path = request.path
+    @path = params[:file] || request.path
     haml view(:not_found)
   end
 end

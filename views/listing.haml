@@ -7,6 +7,11 @@
         :width 800px
         :margin 30 auto 50px
 
+      a
+        :color #1777E0
+        &:hover
+          :color #006db2
+
       span
         :color #777
 
@@ -52,11 +57,11 @@
             - elsif file[1] == :link
               %span= "&rarr;"
           
-            %a{:href => file_url(@path, file[0])}= file[0]
+            %a{:href => file_url(@path, file[0], file[1])}= file[0]
         
             - if %w{.jpg .jpeg .png .gif}.include?(File.extname(file[0]).downcase)
               %a{:href => "/__img_preview?file=#{file_url(@path, file[0])}", :class => "preview_link"} #1024
             - if file[2]
-              %a{:href => "/__view?file=#{file_url(@path, file[0])}", :class => "preview_link"} view
+              %a{:href => "/__view?file=.#{file_url(@path, file[0])}", :class => "preview_link"} view
 
     %script{:type => "text/javascript"}= GEM_ROOT.join('views/utils.js').read
