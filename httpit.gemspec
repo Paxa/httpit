@@ -1,8 +1,8 @@
 Gem::Specification.new do |s|
   s.name              = "httpit"
-  s.version           = "0.4.7"
+  s.version           = "0.4.9"
   s.summary           = "Web server for static files"
-  s.description       = "Just go to folder and run `httpit` to make it avaliable as web-server"
+  s.description       = "HTTP sever for directory index with extra features"
   s.author            = "Pavel Evstigneev"
   s.email             = "pavel.evst@gmail.com"
   s.homepage          = "http://github.com/Paxa/httpit"
@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   
   s.add_runtime_dependency 'sinatra', "~> 1.4.2"
   s.add_runtime_dependency 'haml', '~> 4.0.2'
-  s.add_runtime_dependency 'RedCloth', "~> 4.2.9"
+  s.add_runtime_dependency 'kramdown', "~> 1.3.0"
   s.add_runtime_dependency 'sass', "~> 3.2.8"
 end
 

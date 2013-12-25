@@ -14,7 +14,6 @@ require 'sinatra/base'
 require 'haml'
 require 'sass'
 require 'sass/plugin'
-require 'redcloth'
 
 ROOT = Pathname.pwd
 
@@ -166,8 +165,9 @@ class HttpIt < Sinatra::Base
       halt 404
 
     elsif @path =~ /.+\.md/
+      require 'kramdown' unless defined?(Kramdown::Document)
       content_type :html
-      return RedCloth.new(abs_path.read).to_html
+      return Kramdown::Document.new(File.open(abs_path, 'r:utf8', &:read)).to_html
     
     elsif @path =~ /.+\.haml/
       haml @path.chomp('.haml').to_sym
