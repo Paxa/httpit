@@ -7,9 +7,10 @@ require "pathname"
 require 'shellwords'
 
 GEM_ROOT = Pathname.new(__FILE__).dirname.join("..").expand_path
-ENV['BUNDLE_GEMFILE'] ||= GEM_ROOT.join("Gemfile").to_s
 
-require "bundler/setup"
+# ENV['BUNDLE_GEMFILE'] ||= GEM_ROOT.join("Gemfile").to_s
+# require "bundler/setup"
+
 require 'sinatra/base'
 require 'haml'
 require 'sass'
@@ -39,12 +40,12 @@ class << ROOT
   end
 end
 
-# only one parametr - port number
-if ARGV.size > 0
-  set :port, ARGV.first.to_i
-end
-
 class HttpIt < Sinatra::Base
+  # only one parametr - port number
+  if ARGV.size > 0
+    set :port, ARGV.first.to_i
+  end
+
   set :views, ROOT
   set :public_folder, ROOT
   set :app_file, $0
@@ -127,7 +128,13 @@ class HttpIt < Sinatra::Base
   get '/__img_preview' do
     params[:file] = params[:file].shellescape
     tmppath = "/tmp/httpit_preview_#{Time.now.to_i}.jpeg"
-    `convert #{ROOT + params[:file]} -resize 1024 -quality 100% #{tmppath}`
+    begin
+      puts `convert #{ROOT + params[:file]} -resize 1024 -quality 100% #{tmppath}`
+    rescue => error
+      status 500
+      return "<b>CAN NOT RESIZE!</b><br>Command like utility 'convert' not found in your system (part of ImageMagick)"
+    end
+
     content_type "image/jpeg"
     content = File.open(tmppath, 'rb') { |f| f.read }
     File.delete(tmppath)
@@ -159,7 +166,9 @@ class HttpIt < Sinatra::Base
     if @path =~ /.+\.sass\.css/
       return halt(404) unless File.file?(abs_path.to_s.chomp('.css'))
       content_type :css
-      sass @path.chomp('.sass.css').to_sym
+
+      template = Tilt.new(abs_path.to_s.chomp('.css'))
+      template.render
 
     elsif !abs_path.file? && !abs_path.directory?
       halt 404
@@ -196,4 +205,4 @@ class HttpIt < Sinatra::Base
 end
 
 HttpIt.run!
-at_exit { FileUtils.rm_rf(TMP_DIR) if File.exists?(TMP_DIR) }
+at_exit { FileUtils.rm_rf(TMP_DIR) if File.directory?(TMP_DIR) }

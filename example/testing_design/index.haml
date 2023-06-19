@@ -7,10 +7,10 @@
 
   %body
     #wrapper
-      = haml :"#{@dirname}/_header"
+      != haml :"#{@dirname}/_header"
       .content
         .top-line
-          This is example layout to show how gem "#{"<b>httpit</b>"}" in action
+          This is example layout to show how gem <b>httpit</b> in action
 
         %aside>
           %h4 For example:
@@ -28,8 +28,7 @@
           %h3 The Fibonacci Sequence
           %p
             The mathematics behind the golden ratio is heavily connected to the
-            = succeed "." do
-              %a{:href => "http://en.wikipedia.org/wiki/Fibonacci_sequence"} Fibonacci Sequence
+            %a{:href => "http://en.wikipedia.org/wiki/Fibonacci_sequence"} Fibonacci Sequence
             If you’re unfamiliar with the fibonacci sequence,
             it begins by definition with the numbers 0, 1 and then each successive number
             in the sequence is the sum of the previous two numbers.
@@ -39,8 +38,7 @@
           %p
             I’ll spare you the deep mathematics talk (we’ll just do a bit of division),
             since what we’re mainly interested in is how the sequence relates to the
-            = succeed "." do
-              %a{:href => "http://freemasonry.bcy.ca/symbolism/golden_ratio/index.html"} golden section
+            %a{:href => "http://freemasonry.bcy.ca/symbolism/golden_ratio/index.html"} golden section
 
           %p
             If you take any number in the sequence and divide it by the previous

@@ -51,11 +51,11 @@
         - for file in @files
           %li
             - if file[1] == :file
-              %span= "&ndash;"
+              %span &ndash;
             - elsif file[1] == :dir
-              %span= "+"
+              %span +
             - elsif file[1] == :link
-              %span= "&rarr;"
+              %span &rarr;
           
             %a{:href => file_url(@path, file[0], file[1])}= file[0]
         
