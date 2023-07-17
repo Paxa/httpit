@@ -7,9 +7,8 @@ Gem::Specification.new do |s|
   s.email             = "pavel.evst@gmail.com"
   s.homepage          = "http://github.com/Paxa/httpit"
   s.executables       = ["httpit"]
-  s.rubyforge_project = "httpit"
   s.files             = File.read(__FILE__).match(/__#{'END'}__(.+)\z/m)[1].strip.split("\n") - ['Gemfile.lock']
-  s.licenses          = ['MIT', 'GPL-2']
+  s.licenses          = ['MIT', 'GPL-2.0']
 
   s.add_runtime_dependency 'sinatra', "~> 3.0.6"
   s.add_runtime_dependency 'haml', '~> 6.1.1'
